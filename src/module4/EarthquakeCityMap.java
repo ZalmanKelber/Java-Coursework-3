@@ -1,7 +1,6 @@
 package module4;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
 import de.fhpotsdam.unfolding.data.Feature;
@@ -13,6 +12,7 @@ import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.providers.Google;
 import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
+import de.fhpotsdam.unfolding.providers.Microsoft;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import parsing.ParseFeed;
 import processing.core.PApplet;
@@ -56,19 +56,21 @@ public class EarthquakeCityMap extends PApplet {
 	private List<Marker> cityMarkers;
 	// Markers for each earthquake
 	private List<Marker> quakeMarkers;
+	
+	private List<PointFeature> earthquakes;
 
 	// A List of country markers
 	private List<Marker> countryMarkers;
 	
 	public void setup() {		
 		// (1) Initializing canvas and map tiles
-		size(900, 700, OPENGL);
+		size(900, 700);
 		if (offline) {
 		    map = new UnfoldingMap(this, 200, 50, 650, 600, new MBTilesMapProvider(mbTilesString));
 		    earthquakesURL = "2.5_week.atom";  // The same feed, but saved August 7, 2015
 		}
 		else {
-			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
+			map = new UnfoldingMap(this, 200, 50, 650, 600, new Microsoft.HybridProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 		    //earthquakesURL = "2.5_week.atom";
 		}
@@ -80,7 +82,7 @@ public class EarthquakeCityMap extends PApplet {
 		//earthquakesURL = "test2.atom";
 		
 		// WHEN TAKING THIS QUIZ: Uncomment the next line
-		//earthquakesURL = "quiz1.atom";
+		earthquakesURL = "quiz1.atom";
 		
 		
 		// (2) Reading in earthquake data and geometric properties
@@ -96,7 +98,7 @@ public class EarthquakeCityMap extends PApplet {
 		}
 	    
 		//     STEP 3: read in earthquake RSS feed
-	    List<PointFeature> earthquakes = ParseFeed.parseEarthquake(this, earthquakesURL);
+	    earthquakes = ParseFeed.parseEarthquake(this, earthquakesURL);
 	    quakeMarkers = new ArrayList<Marker>();
 	    
 	    for(PointFeature feature : earthquakes) {
@@ -142,16 +144,19 @@ public class EarthquakeCityMap extends PApplet {
 		text("Earthquake Key", 50, 75);
 		
 		fill(color(255, 0, 0));
-		ellipse(50, 125, 15, 15);
+		rect(40, 115, 20, 20);
 		fill(color(255, 255, 0));
 		ellipse(50, 175, 10, 10);
 		fill(color(0, 0, 255));
-		ellipse(50, 225, 5, 5);
+		float size = 6;
+		float x = 50;
+		float y = 225;
+		triangle(x, y - size, (float) (x - size * .866), (float) (y + .5 * size), (float) (x + size * .866), (float) (y + .5 * size));
 		
 		fill(0, 0, 0);
-		text("5.0+ Magnitude", 75, 125);
-		text("4.0+ Magnitude", 75, 175);
-		text("Below 4.0", 75, 225);
+		text("Sea Earthquake", 75, 125);
+		text("Land Earthquake", 75, 175);
+		text("City Marker,", 75, 225);
 	}
 
 	
@@ -170,7 +175,9 @@ public class EarthquakeCityMap extends PApplet {
 		// If isInCountry ever returns true, isLand should return true.
 		for (Marker m : countryMarkers) {
 			// TODO: Finish this method using the helper method isInCountry
-			
+			if (isInCountry(earthquake, m)) {
+				return true;
+			}
 		}
 		
 		
@@ -197,7 +204,30 @@ public class EarthquakeCityMap extends PApplet {
 		//     	and (2) if it is on land, that its country property matches 
 		//      the name property of the country marker.   If so, increment
 		//      the country's counter.
-		
+		HashMap<String, Integer> countries = new HashMap<String, Integer>();
+		int numInSea = 0;
+		for (PointFeature q : earthquakes) {
+			boolean land = false;
+			for (Marker c : countryMarkers) {
+				// TODO: Finish this method using the helper method isInCountry
+				if (isInCountry(q, c)) {
+					land = true;
+					String name = c.getStringProperty("name");
+					if (countries.keySet().contains(name)) {
+						countries.put(name,  countries.get(name) + 1);
+					} else {
+						countries.put(name,  1);
+					}
+				}
+			}
+			if (!land) {
+				numInSea++;
+			}
+		}
+		for (String country : countries.keySet()) {
+			System.out.println(country + ": " + countries.get(country));
+		}
+		System.out.println("num in sea: " + numInSea);
 		// Here is some code you will find useful:
 		// 
 		//  * To get the name of a country from a country marker in variable cm, use:

@@ -5,3 +5,5 @@ These programs can be run using Eclipse and Java 7 or 8 (later versions are inco
 Completed thus far:
 
 * Simple Markers assignment (in module 3 of source folder)
+
+* Earthquake Markers assignment (in module 4)
