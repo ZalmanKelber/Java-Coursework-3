@@ -2,6 +2,7 @@ package module6;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.fhpotsdam.unfolding.UnfoldingMap;
@@ -67,7 +68,7 @@ public class EarthquakeCityMap extends PApplet {
 	
 	public void setup() {		
 		// (1) Initializing canvas and map tiles
-		size(900, 700, OPENGL);
+		size(900, 700);
 		if (offline) {
 		    map = new UnfoldingMap(this, 200, 50, 650, 600, new MBTilesMapProvider(mbTilesString));
 		    earthquakesURL = "2.5_week.atom";  // The same feed, but saved August 7, 2015
@@ -85,7 +86,7 @@ public class EarthquakeCityMap extends PApplet {
 		//earthquakesURL = "test2.atom";
 		
 		// Uncomment this line to take the quiz
-		//earthquakesURL = "quiz2.atom";
+		earthquakesURL = "quiz2.atom";
 		
 		
 		// (2) Reading in earthquake data and geometric properties
@@ -184,7 +185,9 @@ public class EarthquakeCityMap extends PApplet {
 	@Override
 	public void mouseClicked()
 	{
-		if (lastClicked != null) {
+		if (inKey()) {
+			clickKey();
+		} else if (lastClicked != null) {
 			unhideMarkers();
 			lastClicked = null;
 		}
@@ -195,6 +198,13 @@ public class EarthquakeCityMap extends PApplet {
 				checkCitiesForClick();
 			}
 		}
+	}
+	
+	private boolean inKey() {
+		if (mouseX > 25 && mouseX < 175 && mouseY > 50 && mouseY < 300) {
+			return true;
+		}
+		return false;
 	}
 	
 	// Helper method that will check if a city marker was clicked on
@@ -260,6 +270,10 @@ public class EarthquakeCityMap extends PApplet {
 		for(Marker marker : cityMarkers) {
 			marker.setHidden(false);
 		}
+	}
+	
+	private void clickKey() {
+		
 	}
 	
 	// helper method to draw key in GUI
@@ -372,6 +386,8 @@ public class EarthquakeCityMap extends PApplet {
 			}
 		}
 		System.out.println("OCEAN QUAKES: " + totalWaterQuakes);
+		System.out.println("top earthquakes: ");
+		sortAndPrint(50);
 	}
 	
 	
@@ -408,6 +424,15 @@ public class EarthquakeCityMap extends PApplet {
 			return true;
 		}
 		return false;
+	}
+	
+	private void sortAndPrint(int numToPrint) { 
+		EarthquakeMarker[] quakes = quakeMarkers.toArray(new EarthquakeMarker[quakeMarkers.size()]);
+		Arrays.sort(quakes, Collections.reverseOrder());
+		int n = min(numToPrint, quakes.length);
+		for (int i = 0; i < n; i++) {
+			System.out.println(quakes[i]);
+		}
 	}
 
 }
