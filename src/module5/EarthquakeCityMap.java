@@ -13,6 +13,7 @@ import de.fhpotsdam.unfolding.marker.Marker;
 import de.fhpotsdam.unfolding.marker.MultiMarker;
 import de.fhpotsdam.unfolding.providers.Google;
 import de.fhpotsdam.unfolding.providers.MBTilesMapProvider;
+import de.fhpotsdam.unfolding.providers.Microsoft;
 import de.fhpotsdam.unfolding.utils.MapUtils;
 import parsing.ParseFeed;
 import processing.core.PApplet;
@@ -59,18 +60,18 @@ public class EarthquakeCityMap extends PApplet {
 	private List<Marker> countryMarkers;
 	
 	// NEW IN MODULE 5
-	private CommonMarker lastSelected;
-	private CommonMarker lastClicked;
+	private Marker lastSelected;
+	private Marker lastClicked;
 	
 	public void setup() {		
 		// (1) Initializing canvas and map tiles
-		size(900, 700, OPENGL);
+		size(900, 700);
 		if (offline) {
 		    map = new UnfoldingMap(this, 200, 50, 650, 600, new MBTilesMapProvider(mbTilesString));
 		    earthquakesURL = "2.5_week.atom";  // The same feed, but saved August 7, 2015
 		}
 		else {
-			map = new UnfoldingMap(this, 200, 50, 650, 600, new Google.GoogleMapProvider());
+			map = new UnfoldingMap(this, 0, 0, 650, 600, new Microsoft.HybridProvider());
 			// IF YOU WANT TO TEST WITH A LOCAL FILE, uncomment the next line
 		    //earthquakesURL = "2.5_week.atom";
 		}
@@ -119,7 +120,7 @@ public class EarthquakeCityMap extends PApplet {
 	public void draw() {
 		background(0);
 		map.draw();
-		addKey();
+		//addKey();
 		
 	}
 	
@@ -145,7 +146,14 @@ public class EarthquakeCityMap extends PApplet {
 	// 
 	private void selectMarkerIfHover(List<Marker> markers)
 	{
-		// TODO: Implement this method
+		for (int i = 0; i < markers.size(); i++) {
+			Marker m = markers.get(i);
+			if (m.isInside(map,  mouseX, mouseY)) {
+				m.setSelected(true);
+				lastSelected = m;
+				break;
+			}
+		}
 	}
 	
 	/** The event handler for mouse clicks
@@ -159,6 +167,71 @@ public class EarthquakeCityMap extends PApplet {
 		// TODO: Implement this method
 		// Hint: You probably want a helper method or two to keep this code
 		// from getting too long/disorganized
+		Marker m = lastClicked;
+		if (m != null) {
+			lastClicked = null;
+			showAll();
+		} else {
+			Marker selected = null;
+			for (int i = 0; i < quakeMarkers.size(); i++) {
+				Marker mkr = quakeMarkers.get(i);
+				if (mkr.isInside(map,  mouseX,  mouseY)) {
+					selected = mkr;
+				}
+			}
+			for (int i = 0; i < cityMarkers.size(); i++) {
+				Marker mkr = cityMarkers.get(i);
+				if (mkr.isInside(map,  mouseX,  mouseY)) {
+					selected = mkr;
+				}
+			}
+			if (selected != null) {
+				clickOnMarker(selected);
+			}
+		}
+	}
+	
+	public void showAll() {
+		for (int i = 0; i < quakeMarkers.size(); i++) {
+			quakeMarkers.get(i).setHidden(false);
+		}
+		for (int i = 0; i < cityMarkers.size(); i++) {
+			cityMarkers.get(i).setHidden(false);
+		}
+	}
+	
+	private void clickOnMarker(Marker m) {
+		lastClicked = m;
+		((CommonMarker) m).setClicked(true);
+		if (m instanceof EarthquakeMarker) {
+			double tc = ((EarthquakeMarker) m).threatCircle();
+			for (int i = 0; i < quakeMarkers.size(); i++) {
+				Marker mkr = quakeMarkers.get(i);
+				if (mkr != m) {
+					mkr.setHidden(true);
+				}
+			}
+			for (int i = 0; i < cityMarkers.size(); i++) {
+				Marker mkr = cityMarkers.get(i);
+				if (mkr.getDistanceTo(m.getLocation()) > tc) {
+					mkr.setHidden(true);
+				}
+			}
+		} else {
+			for (int i = 0; i < cityMarkers.size(); i++) {
+				Marker mkr = cityMarkers.get(i);
+				if (mkr != m) {
+					mkr.setHidden(true);
+				}
+			}
+			for (int i = 0; i < quakeMarkers.size(); i++) {
+				Marker mkr = quakeMarkers.get(i);
+				double tc = ((EarthquakeMarker) mkr).threatCircle();
+				if (mkr.getDistanceTo(m.getLocation()) > tc) {
+					mkr.setHidden(true);
+				}
+			}
+		}
 	}
 	
 	

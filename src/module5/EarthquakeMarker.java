@@ -89,11 +89,13 @@ public abstract class EarthquakeMarker extends CommonMarker
 		
 	}
 
-	/** Show the title of the earthquake if this marker is selected */
+	/** Show the title of the earthquake if this marker  is selected */
 	@Override
 	public void showTitle(PGraphics pg, float x, float y)
 	{
-		// TODO: Implement this method
+		pg.fill(255);
+		pg.text((String) getProperty("title"),x + 5,y);
+//		System.out.println("selected earthquake: " + getProperty("title"));
 		
 	}
 
